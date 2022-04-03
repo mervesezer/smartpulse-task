@@ -3,16 +3,19 @@
 import axios from "axios";
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Only POST request is allowed." });
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Only GET request is allowed." });
   }
 
-  const { startDate, endDate } = req.body;
+  const today = new Date();
+  const todayDateFormat = `${today.getFullYear()}-${
+    today.getMonth() + 1
+  }-${today.getDate()}`;
 
   try {
     const response = await axios.get(
       "https://seffaflik.epias.com.tr/transparency/service/market/intra-day-trade-history",
-      { params: { startDate, endDate } }
+      { params: { startDate: todayDateFormat, endDate: todayDateFormat } }
     );
 
     let data = response.data.body.intraDayTradeHistoryList;
@@ -36,33 +39,43 @@ export default async function handler(req, res) {
       let totalProccessValue = 0;
       let totalProccessQuantity = 0;
       let date =
-        group[2] +
-        group[3] +
+        group[6] +
+        group[7] +
         "/" +
         group[4] +
         group[5] +
-        "/" +
-        group[6] +
-        group[7] +
+        "/20" +
+        group[2] +
+        group[3] +
         " " +
         group[8] +
         group[9] +
         ":00";
+
       groups[group].forEach((item) => {
         totalProccessValue += (item.price * item.quantity) / 10;
         totalProccessQuantity += item.quantity / 10;
       });
+
       let avaragePrice = totalProccessValue / totalProccessQuantity;
+
       responseData.push({
         totalProccessValue,
         totalProccessQuantity,
         avaragePrice,
         date,
-        conract,
+        conract: group,
       });
     }
 
-    return res.status(200).json(responseData);
+    return res.status(200).json(
+      responseData.sort((a, b) => {
+        return (
+          Number(`${a.conract[8]}${a.conract[9]}`) -
+          Number(`${b.conract[8]}${b.conract[9]}`)
+        );
+      })
+    );
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
