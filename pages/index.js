@@ -3,6 +3,7 @@ import axios from "axios";
 
 export default function Home() {
   const [data, setData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     getData();
@@ -13,6 +14,7 @@ export default function Home() {
     const response = await axios.get("/api/data");
 
     setData(response.data);
+    setIsLoading(false);
   };
 
   const formatNumber = (number) =>
@@ -20,6 +22,14 @@ export default function Home() {
       .toFixed(2)
       .toString()
       .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+  if (isLoading) {
+    return (
+      <div className="h-screen w-screen flex justify-center items-center">
+        <span className="text-2xl font-bold">Yükleniyor...</span>
+      </div>
+    );
+  }
 
   return (
     <div>
