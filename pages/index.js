@@ -9,6 +9,7 @@ export default function Home() {
   }, []);
 
   const getData = async () => {
+    // Yazilan api dan veriler istenen sekilde cekilir
     const response = await axios.get("/api/data");
 
     setData(response.data);
@@ -41,6 +42,7 @@ export default function Home() {
             </tr>
           </thead>
           <tbody>
+            {/* Cekilen veriler frontendte gosterilir */}
             {data.map((item) => (
               <tr
                 key={item.conract}

@@ -7,22 +7,27 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Only GET request is allowed." });
   }
 
+  //Bulunan tarih alinir ve istenen formata donusturulur
   const today = new Date();
   const todayDateFormat = `${today.getFullYear()}-${
     today.getMonth() + 1
   }-${today.getDate()}`;
 
   try {
+    // API dan veri cekilir ve axios XML i JSON a donusturur
     const response = await axios.get(
       "https://seffaflik.epias.com.tr/transparency/service/market/intra-day-trade-history",
       { params: { startDate: todayDateFormat, endDate: todayDateFormat } }
     );
 
     let data = response.data.body.intraDayTradeHistoryList;
+
+    // Conracti sadece PH ile baslayanlar listeye alinir
     data = data.filter(function (item) {
       return item.conract.startsWith("PH");
     });
 
+    // Conracte gore gruplandirilir.
     const groups = {};
 
     data.forEach((item) => {
@@ -35,6 +40,7 @@ export default async function handler(req, res) {
 
     const responseData = [];
 
+    // Tum conract gruplari gezilerek istenen islemler yapilir ve sonuc responseData icerisine atilir
     for (const group in groups) {
       let totalProccessValue = 0;
       let totalProccessQuantity = 0;
@@ -59,6 +65,7 @@ export default async function handler(req, res) {
 
       let avaragePrice = totalProccessValue / totalProccessQuantity;
 
+      //React tarafinda listeye key verilmesi gerektigi icin conract ekstra olarak yollandi.
       responseData.push({
         totalProccessValue,
         totalProccessQuantity,
@@ -68,6 +75,7 @@ export default async function handler(req, res) {
       });
     }
 
+    // Objeler saate gore siralanarak json formatinda geri dondurulur.
     return res.status(200).json(
       responseData.sort((a, b) => {
         return (
